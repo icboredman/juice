@@ -11,6 +11,7 @@
 //#include <signal.h>
 #include "i2c.hpp"
 #include "cw2015.hpp"
+#include "bq25703a.hpp"
 
 
 int main(int argc, char **argv)
@@ -26,6 +27,7 @@ int main(int argc, char **argv)
     std::cout << "I2C communication successfully setup.\n";
 
     GaugeCW2015 gauge(i2c);
+    ChargerBQ25703A charger(i2c);
 
     while (1)
     {
@@ -33,6 +35,8 @@ int main(int argc, char **argv)
 
         float value;
         int err;
+
+        std::cout << "\n--- Gauge ------------------" << std::endl;
 
         if ((err = gauge.GetVBat(value)) != 0)
             std::cout << "VBat Error: " << err << std::endl;
@@ -43,6 +47,51 @@ int main(int argc, char **argv)
             std::cout << "SOC Error: " << err << std::endl;
         else
             std::cout << "SOC: " << value << std::endl;
+
+        std::cout << "--- Charger ----------------" << std::endl;
+
+        uint16_t stat;
+        if ((err = charger.GetStatus(stat)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "STATUS: " << std::hex << stat << std::dec << std::endl;
+
+        if ((err = charger.GetVBUS(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "VBUS: " << value << " V" << std::endl;
+
+        if ((err = charger.GetPSYS(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "PSYS: " << value << " ?" << std::endl;
+
+        if ((err = charger.GetIIN(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "IIN:  " << value << " A" << std::endl;
+
+        if ((err = charger.GetIDCHG(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "IDCH: " << value << " A" << std::endl;
+
+        if ((err = charger.GetICHG(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "ICHG: " << value << " A" << std::endl;
+
+        if ((err = charger.GetVSYS(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "VSYS: " << value << " V" << std::endl;
+
+        if ((err = charger.GetVBAT(value)) != 0)
+            std::cout << "Error: " << err << std::endl;
+        else
+            std::cout << "VBAT: " << value << " V" << std::endl;
+
+        charger.Kick();
     }
 
     return 0;
