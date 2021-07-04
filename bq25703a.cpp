@@ -2,8 +2,10 @@
 //
 #include "bq25703a.hpp"
 
-#define DEV_ADDR    0x6B
+#define MAX_BAT_VOLTAGE_MV      8400
+#define MAX_CHARGE_CURR_MA      1000
 
+#define DEV_ADDR                0x6B
 #define adcVBUS                 0x27
 #define adcPSYS                 0x26
 #define adcVSYS                 0x2D
@@ -42,12 +44,12 @@
     {
         // Disable Low Power Mode, set Watchdog to 5 sec
         i2c->Write16(0x0E22, DEV_ADDR, chargerOption0reg2);
-        // Configure Max Charge Voltage to 8.2 V
-        uint16_t val = (8200 / 16) << 4;
+        // Configure Max Charge Voltage
+        uint16_t val = (MAX_BAT_VOLTAGE_MV / 16) << 4;
         i2c->Write8(val & 0xFF, DEV_ADDR, maxChargeVoltageReg2); // LSB
         i2c->Write8(val >> 8, DEV_ADDR, maxChargeVoltageReg1);   // MSB
-        // Configure Charge Current to 1 A
-        val = (1000 / 64) << 6;
+        // Configure Charge Current
+        val = (MAX_CHARGE_CURR_MA / 64) << 6;
         i2c->Write8(val & 0xFF, DEV_ADDR, chargeCurrentReg2); // LSB
         i2c->Write8(val >> 8, DEV_ADDR, chargeCurrentReg1);   // MSB
         // Set the ADC on IBAT and PSYS to record values
@@ -56,12 +58,23 @@
         i2c->Write16(0x7FA0, DEV_ADDR, ADCEns);
     }
 
-    void ChargerBQ25703A::Kick(void)
+    void ChargerBQ25703A::Update(bool charge)
     {
-        // Configure Charge Current to 1 A
-        uint16_t val = (1000 / 64) << 6;
+        uint16_t val;
+        // Configure Charge Current
+        if (charge)
+            val = (MAX_CHARGE_CURR_MA / 64) << 6;
+        else
+            val = 0;
         i2c->Write8(val & 0xFF, DEV_ADDR, chargeCurrentReg2); // LSB
         i2c->Write8(val >> 8, DEV_ADDR, chargeCurrentReg1);   // MSB
+        // update status
+        GetStatus(val);
+        status.source = val & 0x0080;
+        status.fastCharge = val & 0x0004;
+        status.preCharge = val & 0x0002;
+        status.charging = status.fastCharge || status.preCharge;
+        status.faults = val & 0xFF00;
     }
 
     int ChargerBQ25703A::GetID(uint8_t &val)
@@ -88,7 +101,7 @@
         uint8_t regval;
         int err;
         if ((err = i2c->Read8(regval, DEV_ADDR, adcPSYS)) == 0)
-            val = regval * 0.012;
+            val = (regval * 0.012) / 33e3 / 1e-6; // R=33k, K=1uA/W
         return err;
     }
 

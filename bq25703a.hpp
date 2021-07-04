@@ -10,8 +10,16 @@
 class ChargerBQ25703A
 {
     public:
+        struct stat {
+            bool source;
+            bool charging;
+            bool fastCharge;
+            bool preCharge;
+            uint8_t faults;
+        } status;
+
         ChargerBQ25703A(I2cDriver &drv);
-        void Kick(void);
+        void Update(bool charge);
         int GetID(uint8_t &val);
         int GetStatus(uint16_t &val);
         int GetVBUS(float &val);

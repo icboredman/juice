@@ -36,7 +36,8 @@ int main(int argc, char **argv)
         float value;
         int err;
 
-        std::cout << "\n--- Gauge ------------------" << std::endl;
+        std::cout << std::endl;
+        std::cout << "--- Gauge ------------------" << std::endl;
 
         if ((err = gauge.GetVBat(value)) != 0)
             std::cout << "VBat Error: " << err << std::endl;
@@ -49,12 +50,19 @@ int main(int argc, char **argv)
             std::cout << "SOC: " << value << std::endl;
 
         std::cout << "--- Charger ----------------" << std::endl;
-
+        charger.Update(true);
         uint16_t stat;
         if ((err = charger.GetStatus(stat)) != 0)
-            std::cout << "Error: " << err << std::endl;
-        else
-            std::cout << "STATUS: " << std::hex << stat << std::dec << std::endl;
+            std::cout << "Status Error: " << err << std::endl;
+        std::cout << "Status: (" << std::hex << stat << std::dec << ")" << std::endl;
+        std::cout << "   Src Chr F P faults" << std::endl;
+        std::cout << "   ------------------" << std::endl;
+        std::cout << "   " <<
+                         (int)charger.status.source << "   " <<
+                         (int)charger.status.charging << "   " <<
+                         (int)charger.status.fastCharge << " " <<
+                         (int)charger.status.preCharge << " " <<
+                         std::hex << (int)charger.status.faults << std::dec << std::endl;
 
         if ((err = charger.GetVBUS(value)) != 0)
             std::cout << "Error: " << err << std::endl;
@@ -64,7 +72,7 @@ int main(int argc, char **argv)
         if ((err = charger.GetPSYS(value)) != 0)
             std::cout << "Error: " << err << std::endl;
         else
-            std::cout << "PSYS: " << value << " ?" << std::endl;
+            std::cout << "PSYS: " << value << " W" << std::endl;
 
         if ((err = charger.GetIIN(value)) != 0)
             std::cout << "Error: " << err << std::endl;
@@ -90,8 +98,6 @@ int main(int argc, char **argv)
             std::cout << "Error: " << err << std::endl;
         else
             std::cout << "VBAT: " << value << " V" << std::endl;
-
-        charger.Kick();
     }
 
     return 0;
