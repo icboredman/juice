@@ -2,10 +2,11 @@
 //
 #include "bq25703a.hpp"
 
-#define MAX_BAT_VOLTAGE_MV      8400
+#define MAX_BAT_VOLTAGE_MV      8300
 #define MAX_CHARGE_CURR_MA      1000
 
 #define DEV_ADDR                0x6B
+
 #define adcVBUS                 0x27
 #define adcPSYS                 0x26
 #define adcVSYS                 0x2D
@@ -52,10 +53,10 @@
         val = (MAX_CHARGE_CURR_MA / 64) << 6;
         i2c->Write8(val & 0xFF, DEV_ADDR, chargeCurrentReg2); // LSB
         i2c->Write8(val >> 8, DEV_ADDR, chargeCurrentReg1);   // MSB
-        // Set the ADC on IBAT and PSYS to record values
-        i2c->Write16(0x1192, DEV_ADDR, chargerOption1reg2);
-        // enable continuous conversion on ADCs: VBUS, PSYS, IIN, IDCHG, ICHG, VSYS, VBAT
-        i2c->Write16(0x7FA0, DEV_ADDR, ADCEns);
+        // Set the ADC on IBAT, but not on PSYS, to record values
+        i2c->Write16(0x1182, DEV_ADDR, chargerOption1reg2);
+        // enable continuous conversion on ADCs: VBUS, IIN, IDCHG, ICHG, VSYS, VBAT
+        i2c->Write16(0x5FA0, DEV_ADDR, ADCEns);
     }
 
     void ChargerBQ25703A::Update(bool charge)
@@ -153,8 +154,6 @@
 
     int ChargerBQ25703A::GetOption(uint16_t &val)
     {
-//        return i2c->Read16(val, DEV_ADDR, maxChargeVoltageReg2);
-//        return i2c->Read16(val, DEV_ADDR, chargeCurrentReg2);
         return i2c->Read16(val, DEV_ADDR, minSystemVoltageReg2);
     }
 

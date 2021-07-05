@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include "i2c.hpp"
 
-
 class ChargerBQ25703A
 {
     public:
