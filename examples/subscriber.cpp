@@ -39,9 +39,6 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
-#include "i2c.hpp"
-#include "cw2015.hpp"
-#include "bq25703a.hpp"
 #include <mqtt/async_client.h>
 
 using namespace std;
