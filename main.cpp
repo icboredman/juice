@@ -12,48 +12,43 @@
 #include "cw2015.hpp"
 #include "bq25703a.hpp"
 #include <mqtt/async_client.h>
+#include "settings.hpp"
 
 using namespace std;
 
 const string SERVER_ADDRESS { "tcp://localhost:1883" };
-const string TOPIC { "juice" };
+//const string TOPIC { "juice" };
 const int QOS = 0; // at most once
 
 const auto TIMEOUT = std::chrono::seconds(10);
 
-typedef struct {     \
-    bool source;     \
-    bool charging;   \
-    bool fastCharge; \
-    bool preCharge;  \
-    uint8_t faults;  \
-} tStat;
-
-typedef struct {     \
-    float VBat;      \
-    float SoC;       \
-} tGauge;
-
-typedef struct {     \
-    float VBus;      \
-    float VSys;      \
-    float VBat;      \
-    float IIn;       \
-    float IChg;      \
-    float IDchg;     \
-} tCharger;
-
-struct sPowerData
+typedef struct
 {
-    tGauge gauge;
-    tCharger charger;
-    tStat status;
-} juice;
+    struct sGauge {
+        float VBat;
+        float SoC;
+    } gauge;
+    struct sCharger {
+        float VBus;
+        float VSys;
+        float VBat;
+        float IIn;
+        float IChg;
+        float IDchg;
+    } charger;
+    struct sStat {
+        bool source;
+        bool charging;
+        bool fastCharge;
+        bool preCharge;
+        uint8_t faults;
+    } status;
+} tPowerData;
 
+tPowerData juice;
 
 int main(int argc, char **argv)
 {
-
     I2cDriver i2c("/dev/i2c-8");
 
     if (!i2c.Ready())
@@ -65,6 +60,11 @@ int main(int argc, char **argv)
 
     GaugeCW2015 gauge(i2c);
     ChargerBQ25703A charger(i2c);
+
+    Settings::RetrieveCluster();
+    string devstr = to_string(Settings::Cluster()->unitID);
+    uint zeros = 5 - min((size_t)5, devstr.size());
+    string topic = "aria/fish" + string(zeros, '0').append(devstr) + "/fish/juice";
 
     cout << "Initializing for server '" << SERVER_ADDRESS << "'...";
     mqtt::async_client client(SERVER_ADDRESS, "");
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
                 juice.charger.IChg = value;
 
             // publish data over MQTT
-            mqtt::message_ptr pubmsg = mqtt::make_message(TOPIC, &juice, sizeof(juice));
+            mqtt::message_ptr pubmsg = mqtt::make_message(topic, &juice, sizeof(juice));
             pubmsg->set_qos(QOS);
             client.publish(pubmsg)->wait_for(TIMEOUT);
             //cout << "  ...OK" << endl;

@@ -14,6 +14,8 @@ add_executable(${CMAKE_PROJECT_NAME}
    ${PROJECT_SOURCE_DIR}/cw2015.cpp
    ${PROJECT_SOURCE_DIR}/bq25703a.hpp
    ${PROJECT_SOURCE_DIR}/bq25703a.cpp
+   ${PROJECT_SOURCE_DIR}/settings.hpp
+   ${PROJECT_SOURCE_DIR}/settings.cpp
 )
 
 find_package(OpenSSL REQUIRED)
