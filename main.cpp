@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     ChargerBQ25703A charger(i2c);
 
     Settings::RetrieveCluster();
-    string devstr = to_string(Settings::Cluster()->unitID);
+    string devstr = to_string(Settings::Cluster()->unit_id);
     uint zeros = 5 - min((size_t)5, devstr.size());
     string topic = "aria/fish" + string(zeros, '0').append(devstr) + "/fish/juice";
 
