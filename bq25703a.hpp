@@ -9,12 +9,12 @@
 class ChargerBQ25703A
 {
     public:
-        struct stat {
+        struct alignas(1) stat {
             bool source;
             bool charging;
             bool fastCharge;
             bool preCharge;
-            uint8_t faults;
+            uint16_t faults;
         } status;
 
         ChargerBQ25703A(I2cDriver &drv);

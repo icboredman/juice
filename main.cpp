@@ -22,13 +22,13 @@ const int QOS = 0; // at most once
 
 const auto TIMEOUT = std::chrono::seconds(10);
 
-typedef struct
+typedef struct alignas(4)
 {
-    struct sGauge {
+    struct alignas(4) sGauge {
         float VBat;
         float SoC;
     } gauge;
-    struct sCharger {
+    struct alignas(4) sCharger {
         float VBus;
         float VSys;
         float VBat;
@@ -36,12 +36,12 @@ typedef struct
         float IChg;
         float IDchg;
     } charger;
-    struct sStat {
+    struct alignas(1) sStat {
         bool source;
         bool charging;
         bool fastCharge;
         bool preCharge;
-        uint8_t faults;
+        uint16_t faults;
     } status;
 } tPowerData;
 
