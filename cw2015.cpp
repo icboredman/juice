@@ -2,6 +2,8 @@
 //
 #include "cw2015.hpp"
 
+#define SOC_USE_TABLE
+
 #define DEV_ADDR    0x62
 
 #define REG_VERSION 0x00
@@ -10,7 +12,6 @@
 #define REG_RRT     0x06
 #define REG_CONFIG  0x08
 #define REG_MODE    0x0A
-
 
     GaugeCW2015::GaugeCW2015(I2cDriver &drv)
     {
@@ -45,6 +46,7 @@
         return err;
     }
 
+#ifndef SOC_USE_TABLE
     int GaugeCW2015::GetSoC(float &val)
     {
         uint16_t data;
@@ -53,3 +55,53 @@
             val = data / 256.0;
         return err;
     }
+#else
+//https://stackoverflow.com/a/7091791
+    typedef struct { float x; float y; } tLut;
+
+    tLut lut[12] =
+    {
+        {4.00, 100},
+        {3.86, 90},
+        {3.78, 80},
+        {3.72, 70},
+        {3.67, 60},
+        {3.62, 50},
+        {3.59, 40},
+        {3.57, 30},
+        {3.54, 20},
+        {3.48, 10},
+        {3.25, 5},
+        {2.8, 0}
+    };
+
+    float Interpolate(tLut* c, float x, int n)
+    {
+        int i;
+
+        for ( i = 0; i < n-1; i++ )
+        {
+            if ( c[i].x >= x && c[i+1].x < x )
+            {
+                float diffx = x - c[i+1].x;
+                float diffn = c[i].x - c[i+1].x;
+
+                return c[i+1].y + ( c[i].y - c[i+1].y ) * diffx / diffn;
+            }
+        }
+
+        return 0; // Not in Range
+    }
+
+    int GaugeCW2015::GetSoC(float &val)
+    {
+        float vBat = val / 2;
+        if (vBat >= lut[0].x)
+            val = lut[0].y;
+        else if (vBat <= lut[11].x)
+            val = lut[11].y;
+        else
+            val = Interpolate(lut, vBat, 12);
+        return 0;
+    }
+#endif

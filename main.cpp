@@ -14,6 +14,8 @@
 #include <mqtt/async_client.h>
 #include "settings.hpp"
 
+#include "powerdata.pb.h"
+
 using namespace std;
 
 const string SERVER_ADDRESS { "tcp://localhost:1883" };
@@ -45,7 +47,7 @@ typedef struct alignas(4)
     } status;
 } tPowerData;
 
-tPowerData juice;
+tPowerData juice_legacy;
 
 int main(int argc, char **argv)
 {
@@ -70,13 +72,15 @@ int main(int argc, char **argv)
     mqtt::async_client client(SERVER_ADDRESS, "");
     cout << "  OK" << endl;
 
+    protopower::Gauge juice_gauge;
+
     try
     {
         cout << "\nConnecting...";
         client.connect()->wait();
         cout << "  OK" << endl;
 
-        cout << "\nPublishing messages..." << endl;
+        cout << "\nPublishing messages on topic: " << topic << endl;
 
         while (1)
         {
@@ -89,51 +93,65 @@ int main(int argc, char **argv)
             if ((err = gauge.GetVBat(value)) != 0)
                 cout << "Gauge VBat Error: " << err << endl;
             else
-                juice.gauge.VBat = value;
+            {
+                juice_legacy.gauge.VBat = value;
+                juice_gauge.set_vbat(value);
+            }
 
             if ((err = gauge.GetSoC(value)) != 0)
                 cout << "Gauge SOC Error: " << err << endl;
             else
-                juice.gauge.SoC = value;
+            {
+                juice_legacy.gauge.SoC = value;
+                juice_gauge.set_soc(value);
+            }
 
             charger.Update(true);
 
-            memcpy(&juice.status, &charger.status, sizeof(juice.status));
+            memcpy(&juice_legacy.status, &charger.status, sizeof(juice_legacy.status));
+            juice_gauge.set_charging(juice_legacy.status.charging);
 
             if ((err = charger.GetVBUS(value)) != 0)
                 cout << "Charger VBus Error: " << err << endl;
             else
-                juice.charger.VBus = value;
+                juice_legacy.charger.VBus = value;
 
             if ((err = charger.GetVBAT(value)) != 0)
                 cout << "Charger VBat Error: " << err << endl;
             else
-                juice.charger.VBat = value;
+                juice_legacy.charger.VBat = value;
 
             if ((err = charger.GetVSYS(value)) != 0)
                 cout << "Charger VSys Error: " << err << endl;
             else
-                juice.charger.VSys = value;
+                juice_legacy.charger.VSys = value;
 
             if ((err = charger.GetIIN(value)) != 0)
                 cout << "Charger IIn Error: " << err << endl;
             else
-                juice.charger.IIn = value;
+                juice_legacy.charger.IIn = value;
 
             if ((err = charger.GetIDCHG(value)) != 0)
                 cout << "Charger IDchg Error: " << err << endl;
             else
-                juice.charger.IDchg = value;
+                juice_legacy.charger.IDchg = value;
 
             if ((err = charger.GetICHG(value)) != 0)
                 cout << "Charger IChg Error: " << err << endl;
             else
-                juice.charger.IChg = value;
+                juice_legacy.charger.IChg = value;
 
             // publish data over MQTT
-            mqtt::message_ptr pubmsg = mqtt::make_message(topic, &juice, sizeof(juice));
+            string msg_data = juice_gauge.SerializeAsString();
+            mqtt::message_ptr pubmsg = mqtt::make_message(topic, msg_data);
             pubmsg->set_qos(QOS);
             client.publish(pubmsg)->wait_for(TIMEOUT);
+
+            // publish internal data using legacy format
+            pubmsg = mqtt::make_message("internal/juice", &juice_legacy, sizeof(juice_legacy));
+            pubmsg->set_qos(QOS);
+            client.publish(pubmsg)->wait_for(TIMEOUT);
+
             //cout << "  ...OK" << endl;
         }
     }
