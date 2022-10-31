@@ -5,6 +5,7 @@
 
 
 #include <iostream> // cin, cout
+#include <fstream>  // ifstream, ofstream
 #include <iomanip>
 #include <thread>
 #include <chrono>
@@ -12,8 +13,6 @@
 #include "cw2015.hpp"
 #include "bq25703a.hpp"
 #include <mqtt/async_client.h>
-#include "settings.hpp"
-
 #include "powerdata.pb.h"
 
 using namespace std;
@@ -63,8 +62,12 @@ int main(int argc, char **argv)
     GaugeCW2015 gauge(i2c);
     ChargerBQ25703A charger(i2c);
 
-    Settings::RetrieveCluster();
-    string devstr = to_string(Settings::Cluster()->unit_id);
+    // get my unit id
+    uint32_t myId = 0;
+    std::fstream idfile("/home/fish/my-unit-id.txt", std::ios::in);
+    if (idfile)
+        idfile >> myId;
+    string devstr = to_string(myId);
     uint zeros = 5 - min((size_t)5, devstr.size());
     string topic = "aria/fish" + string(zeros, '0').append(devstr) + "/fish/juice";
 
