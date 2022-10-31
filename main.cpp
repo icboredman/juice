@@ -64,9 +64,10 @@ int main(int argc, char **argv)
 
     // get my unit id
     uint32_t myId = 0;
-    std::fstream idfile("/home/fish/my-unit-id.txt", std::ios::in);
+    std::ifstream idfile("/home/fish/my-unit-id.txt", std::ios::in);
     if (idfile)
         idfile >> myId;
+    idfile.close();
     string devstr = to_string(myId);
     uint zeros = 5 - min((size_t)5, devstr.size());
     string topic = "aria/fish" + string(zeros, '0').append(devstr) + "/fish/juice";
