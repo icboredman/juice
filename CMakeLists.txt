@@ -22,8 +22,9 @@ find_package(OpenSSL REQUIRED)
 find_library(paho-mqttpp3 NAMES libpaho-mqttpp3.a REQUIRED)
 find_library(paho-mqtt3a NAMES libpaho-mqtt3a.so REQUIRED)
 find_package(Protobuf REQUIRED)
+find_library(systemd REQUIRED)
 
-target_link_libraries(${CMAKE_PROJECT_NAME} pthread crypt rt paho-mqtt3a paho-mqttpp3 ${Protobuf_LITE_LIBRARIES})
+target_link_libraries(${CMAKE_PROJECT_NAME} pthread crypt rt paho-mqtt3a paho-mqttpp3 ${Protobuf_LITE_LIBRARIES} systemd)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 

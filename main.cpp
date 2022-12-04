@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <systemd/sd-daemon.h>  // sd_notify
 #include "i2c.hpp"
 #include "cw2015.hpp"
 #include "bq25703a.hpp"
@@ -48,8 +49,19 @@ typedef struct alignas(4)
 
 tPowerData juice_legacy;
 
+#define HEART_RATE_MS  1000
+
 int main(int argc, char **argv)
 {
+    // from "https://blog.hackeriet.no/systemd-service-type-notify-and-watchdog-c/"
+    // Detect if expected to notify watchdog
+    uint64_t watchdogNotifyIntervalUsec = 0;
+    int watchdogEnabled = sd_watchdog_enabled(0, &watchdogNotifyIntervalUsec);
+    // man systemd.service recommends notifying every half time of max
+    watchdogNotifyIntervalUsec = watchdogNotifyIntervalUsec / 2;
+    cout << "Systemd watchdog enabled: " << watchdogEnabled << endl;
+    cout << "Systemd watchdog notify interval (divided by 2): " << watchdogNotifyIntervalUsec << endl;
+
     I2cDriver i2c("/dev/i2c-8");
 
     if (!i2c.Ready())
@@ -84,11 +96,16 @@ int main(int argc, char **argv)
         client.connect()->wait();
         cout << "  OK" << endl;
 
+        cout << "Initialization complete." << endl;
+        // Notify systemd service that we're ready
+        sd_notify(0, "READY=1");
+        uint64_t elapsedUsec = 0;
+
         cout << "\nPublishing messages on topic: " << topic << endl;
 
         while (1)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            auto next_run_time = chrono::system_clock::now() + chrono::milliseconds(HEART_RATE_MS);
 
             // collect data
             float value;
@@ -156,7 +173,17 @@ int main(int argc, char **argv)
             pubmsg->set_qos(QOS);
             client.publish(pubmsg)->wait_for(TIMEOUT);
 
-            //cout << "  ...OK" << endl;
+            if (watchdogEnabled)
+            {
+                elapsedUsec += HEART_RATE_MS * 1000;
+                if (elapsedUsec >= watchdogNotifyIntervalUsec)
+                {// Notify systemd this service is still alive and good
+//                    sd_notify(0, "WATCHDOG=1");
+                    elapsedUsec = 0;
+                }
+            }
+
+            this_thread::sleep_until(next_run_time);
         }
     }
     catch (const mqtt::exception& exc)
