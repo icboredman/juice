@@ -90,106 +90,118 @@ int main(int argc, char **argv)
 
     protopower::Gauge juice_gauge;
 
-    try
+    cout << "Initialization complete." << endl;
+    // Notify systemd service that we're ready
+    sd_notify(0, "READY=1");
+
+    while (1)
     {
-        cout << "\nConnecting...";
-        client.connect()->wait();
-        cout << "  OK" << endl;
-
-        cout << "Initialization complete." << endl;
-        // Notify systemd service that we're ready
-        sd_notify(0, "READY=1");
-        uint64_t elapsedUsec = 0;
-
-        cout << "\nPublishing messages on topic: " << topic << endl;
-
-        while (1)
+        try
         {
-            auto next_run_time = chrono::system_clock::now() + chrono::milliseconds(HEART_RATE_MS);
+            cout << "\nConnecting...";
+            client.connect()->wait();
+            cout << "  OK" << endl;
 
-            // collect data
-            float value;
-            int err;
+            uint64_t elapsedUsec = 0;
 
-            if ((err = gauge.GetVBat(value)) != 0)
-                cout << "Gauge VBat Error: " << err << endl;
-            else
+            cout << "\nPublishing messages on topic: " << topic << endl;
+
+            while (1)
             {
-                juice_legacy.gauge.VBat = value;
-                juice_gauge.set_vbat(value);
-            }
+                auto next_run_time = chrono::system_clock::now() + chrono::milliseconds(HEART_RATE_MS);
 
-            if ((err = gauge.GetSoC(value)) != 0)
-                cout << "Gauge SOC Error: " << err << endl;
-            else
-            {
-                juice_legacy.gauge.SoC = value;
-                juice_gauge.set_soc(value);
-            }
+                // collect data
+                float value;
+                int err;
 
-            charger.Update(true);
-
-            memcpy(&juice_legacy.status, &charger.status, sizeof(juice_legacy.status));
-            juice_gauge.set_charging(juice_legacy.status.charging);
-
-            if ((err = charger.GetVBUS(value)) != 0)
-                cout << "Charger VBus Error: " << err << endl;
-            else
-                juice_legacy.charger.VBus = value;
-
-            if ((err = charger.GetVBAT(value)) != 0)
-                cout << "Charger VBat Error: " << err << endl;
-            else
-                juice_legacy.charger.VBat = value;
-
-            if ((err = charger.GetVSYS(value)) != 0)
-                cout << "Charger VSys Error: " << err << endl;
-            else
-                juice_legacy.charger.VSys = value;
-
-            if ((err = charger.GetIIN(value)) != 0)
-                cout << "Charger IIn Error: " << err << endl;
-            else
-                juice_legacy.charger.IIn = value;
-
-            if ((err = charger.GetIDCHG(value)) != 0)
-                cout << "Charger IDchg Error: " << err << endl;
-            else
-                juice_legacy.charger.IDchg = value;
-
-            if ((err = charger.GetICHG(value)) != 0)
-                cout << "Charger IChg Error: " << err << endl;
-            else
-                juice_legacy.charger.IChg = value;
-
-            // publish data over MQTT
-            string msg_data = juice_gauge.SerializeAsString();
-            mqtt::message_ptr pubmsg = mqtt::make_message(topic, msg_data);
-            pubmsg->set_qos(QOS);
-            client.publish(pubmsg)->wait_for(TIMEOUT);
-
-            // publish internal data using legacy format
-            pubmsg = mqtt::make_message("internal/juice", &juice_legacy, sizeof(juice_legacy));
-            pubmsg->set_qos(QOS);
-            client.publish(pubmsg)->wait_for(TIMEOUT);
-
-            if (watchdogEnabled)
-            {
-                elapsedUsec += HEART_RATE_MS * 1000;
-                if (elapsedUsec >= watchdogNotifyIntervalUsec)
-                {// Notify systemd this service is still alive and good
-                    sd_notify(0, "WATCHDOG=1");
-                    elapsedUsec = 0;
+                if ((err = gauge.GetVBat(value)) != 0)
+                    cout << "Gauge VBat Error: " << err << endl;
+                else
+                {
+                    juice_legacy.gauge.VBat = value;
+                    juice_gauge.set_vbat(value);
                 }
-            }
 
-            this_thread::sleep_until(next_run_time);
+                if ((err = gauge.GetSoC(value)) != 0)
+                    cout << "Gauge SOC Error: " << err << endl;
+                else
+                {
+                    juice_legacy.gauge.SoC = value;
+                    juice_gauge.set_soc(value);
+                }
+
+                charger.Update(true);
+
+                memcpy(&juice_legacy.status, &charger.status, sizeof(juice_legacy.status));
+                juice_gauge.set_charging(juice_legacy.status.charging);
+
+                if ((err = charger.GetVBUS(value)) != 0)
+                    cout << "Charger VBus Error: " << err << endl;
+                else
+                    juice_legacy.charger.VBus = value;
+
+                if ((err = charger.GetVBAT(value)) != 0)
+                    cout << "Charger VBat Error: " << err << endl;
+                else
+                    juice_legacy.charger.VBat = value;
+
+                if ((err = charger.GetVSYS(value)) != 0)
+                    cout << "Charger VSys Error: " << err << endl;
+                else
+                    juice_legacy.charger.VSys = value;
+
+                if ((err = charger.GetIIN(value)) != 0)
+                    cout << "Charger IIn Error: " << err << endl;
+                else
+                    juice_legacy.charger.IIn = value;
+
+                if ((err = charger.GetIDCHG(value)) != 0)
+                    cout << "Charger IDchg Error: " << err << endl;
+                else
+                    juice_legacy.charger.IDchg = value;
+
+                if ((err = charger.GetICHG(value)) != 0)
+                    cout << "Charger IChg Error: " << err << endl;
+                else
+                    juice_legacy.charger.IChg = value;
+
+                // publish data over MQTT
+                string msg_data = juice_gauge.SerializeAsString();
+                mqtt::message_ptr pubmsg = mqtt::make_message(topic, msg_data);
+                pubmsg->set_qos(QOS);
+                client.publish(pubmsg)->wait_for(TIMEOUT);
+
+                // publish internal data using legacy format
+                pubmsg = mqtt::make_message("internal/juice", &juice_legacy, sizeof(juice_legacy));
+                pubmsg->set_qos(QOS);
+                client.publish(pubmsg)->wait_for(TIMEOUT);
+
+                if (watchdogEnabled)
+                {
+                    elapsedUsec += HEART_RATE_MS * 1000;
+                    if (elapsedUsec >= watchdogNotifyIntervalUsec)
+                    {// Notify systemd this service is still alive and good
+                        sd_notify(0, "WATCHDOG=1");
+                        elapsedUsec = 0;
+                    }
+                }
+
+                this_thread::sleep_until(next_run_time);
+            }
         }
-    }
-    catch (const mqtt::exception& exc)
-    {
-        cerr << exc.what() << endl;
-        return 1;
+        catch (const mqtt::exception& exc)
+        {
+            cerr << exc.what() << endl;
+            //return 1;
+        }
+
+        if (!client.is_connected())
+        {
+            cout << "Will attempt to reconnect in 1 sec..." << endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        }
+        else
+            return 1;
     }
 
     return 0;
