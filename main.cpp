@@ -178,7 +178,7 @@ int main(int argc, char **argv)
                 elapsedUsec += HEART_RATE_MS * 1000;
                 if (elapsedUsec >= watchdogNotifyIntervalUsec)
                 {// Notify systemd this service is still alive and good
-//                    sd_notify(0, "WATCHDOG=1");
+                    sd_notify(0, "WATCHDOG=1");
                     elapsedUsec = 0;
                 }
             }
