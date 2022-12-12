@@ -20,7 +20,8 @@ namespace _pbi = _pb::internal;
 namespace protopower {
 PROTOBUF_CONSTEXPR Gauge::Gauge(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.vbat_)*/0
+    /*decltype(_impl_.appversion_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.vbat_)*/0
   , /*decltype(_impl_.soc_)*/0
   , /*decltype(_impl_.charging_)*/false
   , /*decltype(_impl_._cached_size_)*/{}} {}
@@ -102,12 +103,21 @@ Gauge::Gauge(const Gauge& from)
   : ::PROTOBUF_NAMESPACE_ID::MessageLite() {
   Gauge* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.vbat_){}
+      decltype(_impl_.appversion_){}
+    , decltype(_impl_.vbat_){}
     , decltype(_impl_.soc_){}
     , decltype(_impl_.charging_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<std::string>(from._internal_metadata_);
+  _impl_.appversion_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.appversion_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_appversion().empty()) {
+    _this->_impl_.appversion_.Set(from._internal_appversion(), 
+      _this->GetArenaForAllocation());
+  }
   ::memcpy(&_impl_.vbat_, &from._impl_.vbat_,
     static_cast<size_t>(reinterpret_cast<char*>(&_impl_.charging_) -
     reinterpret_cast<char*>(&_impl_.vbat_)) + sizeof(_impl_.charging_));
@@ -119,11 +129,16 @@ inline void Gauge::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.vbat_){0}
+      decltype(_impl_.appversion_){}
+    , decltype(_impl_.vbat_){0}
     , decltype(_impl_.soc_){0}
     , decltype(_impl_.charging_){false}
     , /*decltype(_impl_._cached_size_)*/{}
   };
+  _impl_.appversion_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.appversion_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
 Gauge::~Gauge() {
@@ -137,6 +152,7 @@ Gauge::~Gauge() {
 
 inline void Gauge::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.appversion_.Destroy();
 }
 
 void Gauge::SetCachedSize(int size) const {
@@ -149,6 +165,7 @@ void Gauge::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.appversion_.ClearToEmpty();
   ::memset(&_impl_.vbat_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&_impl_.charging_) -
       reinterpret_cast<char*>(&_impl_.vbat_)) + sizeof(_impl_.charging_));
@@ -182,6 +199,16 @@ const char* Gauge::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
           _impl_.charging_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // string appversion = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          auto str = _internal_mutable_appversion();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, nullptr));
         } else
           goto handle_unusual;
         continue;
@@ -240,6 +267,16 @@ uint8_t* Gauge::_InternalSerialize(
     target = ::_pbi::WireFormatLite::WriteBoolToArray(3, this->_internal_charging(), target);
   }
 
+  // string appversion = 4;
+  if (!this->_internal_appversion().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_appversion().data(), static_cast<int>(this->_internal_appversion().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "protopower.Gauge.appversion");
+    target = stream->WriteStringMaybeAliased(
+        4, this->_internal_appversion(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = stream->WriteRaw(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).data(),
         static_cast<int>(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).size()), target);
@@ -255,6 +292,13 @@ size_t Gauge::ByteSizeLong() const {
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
+
+  // string appversion = 4;
+  if (!this->_internal_appversion().empty()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_appversion());
+  }
 
   // float vbat = 1;
   static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
@@ -300,6 +344,9 @@ void Gauge::MergeFrom(const Gauge& from) {
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (!from._internal_appversion().empty()) {
+    _this->_internal_set_appversion(from._internal_appversion());
+  }
   static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
   float tmp_vbat = from._internal_vbat();
   uint32_t raw_vbat;
@@ -333,7 +380,13 @@ bool Gauge::IsInitialized() const {
 
 void Gauge::InternalSwap(Gauge* other) {
   using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.appversion_, lhs_arena,
+      &other->_impl_.appversion_, rhs_arena
+  );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
       PROTOBUF_FIELD_OFFSET(Gauge, _impl_.charging_)
       + sizeof(Gauge::_impl_.charging_)

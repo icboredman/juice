@@ -2,3 +2,4 @@
 !/bin/.gitkeep
 /build/
 !/build/.gitkeep
+version.h

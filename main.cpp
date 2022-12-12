@@ -15,6 +15,7 @@
 #include "bq25703a.hpp"
 #include <mqtt/async_client.h>
 #include "powerdata.pb.h"
+#include "version.h"
 
 using namespace std;
 
@@ -164,6 +165,8 @@ int main(int argc, char **argv)
                     cout << "Charger IChg Error: " << err << endl;
                 else
                     juice_legacy.charger.IChg = value;
+
+                juice_gauge.set_appversion(VERSION);
 
                 // publish data over MQTT
                 string msg_data = juice_gauge.SerializeAsString();

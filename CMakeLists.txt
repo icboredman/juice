@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(juice  VERSION 1.0
+project(juice  VERSION 2.0
                DESCRIPTION "Battery charging and monitoring"
 )
+
+configure_file ("${PROJECT_SOURCE_DIR}/version.h.template" "${PROJECT_SOURCE_DIR}/version.h")
 
 #include_directories(${PROJECT_SOURCE_DIR})
 
 add_executable(${CMAKE_PROJECT_NAME}
    ${PROJECT_SOURCE_DIR}/main.cpp
+   ${PROJECT_SOURCE_DIR}/version.h
    ${PROJECT_SOURCE_DIR}/i2c.hpp
    ${PROJECT_SOURCE_DIR}/i2c.cpp
    ${PROJECT_SOURCE_DIR}/cw2015.hpp
