@@ -24,6 +24,8 @@ PROTOBUF_CONSTEXPR Gauge::Gauge(
   , /*decltype(_impl_.vbat_)*/0
   , /*decltype(_impl_.soc_)*/0
   , /*decltype(_impl_.charging_)*/false
+  , /*decltype(_impl_.ibat_)*/0
+  , /*decltype(_impl_.temp_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct GaugeDefaultTypeInternal {
   PROTOBUF_CONSTEXPR GaugeDefaultTypeInternal()
@@ -107,6 +109,8 @@ Gauge::Gauge(const Gauge& from)
     , decltype(_impl_.vbat_){}
     , decltype(_impl_.soc_){}
     , decltype(_impl_.charging_){}
+    , decltype(_impl_.ibat_){}
+    , decltype(_impl_.temp_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<std::string>(from._internal_metadata_);
@@ -119,8 +123,8 @@ Gauge::Gauge(const Gauge& from)
       _this->GetArenaForAllocation());
   }
   ::memcpy(&_impl_.vbat_, &from._impl_.vbat_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.charging_) -
-    reinterpret_cast<char*>(&_impl_.vbat_)) + sizeof(_impl_.charging_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.temp_) -
+    reinterpret_cast<char*>(&_impl_.vbat_)) + sizeof(_impl_.temp_));
   // @@protoc_insertion_point(copy_constructor:protopower.Gauge)
 }
 
@@ -133,6 +137,8 @@ inline void Gauge::SharedCtor(
     , decltype(_impl_.vbat_){0}
     , decltype(_impl_.soc_){0}
     , decltype(_impl_.charging_){false}
+    , decltype(_impl_.ibat_){0}
+    , decltype(_impl_.temp_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.appversion_.InitDefault();
@@ -167,8 +173,8 @@ void Gauge::Clear() {
 
   _impl_.appversion_.ClearToEmpty();
   ::memset(&_impl_.vbat_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.charging_) -
-      reinterpret_cast<char*>(&_impl_.vbat_)) + sizeof(_impl_.charging_));
+      reinterpret_cast<char*>(&_impl_.temp_) -
+      reinterpret_cast<char*>(&_impl_.vbat_)) + sizeof(_impl_.temp_));
   _internal_metadata_.Clear<std::string>();
 }
 
@@ -209,6 +215,22 @@ const char* Gauge::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
           CHK_(::_pbi::VerifyUTF8(str, nullptr));
+        } else
+          goto handle_unusual;
+        continue;
+      // float ibat = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 45)) {
+          _impl_.ibat_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
+          goto handle_unusual;
+        continue;
+      // float temp = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 53)) {
+          _impl_.temp_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
         } else
           goto handle_unusual;
         continue;
@@ -277,6 +299,26 @@ uint8_t* Gauge::_InternalSerialize(
         4, this->_internal_appversion(), target);
   }
 
+  // float ibat = 5;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_ibat = this->_internal_ibat();
+  uint32_t raw_ibat;
+  memcpy(&raw_ibat, &tmp_ibat, sizeof(tmp_ibat));
+  if (raw_ibat != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(5, this->_internal_ibat(), target);
+  }
+
+  // float temp = 6;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_temp = this->_internal_temp();
+  uint32_t raw_temp;
+  memcpy(&raw_temp, &tmp_temp, sizeof(tmp_temp));
+  if (raw_temp != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(6, this->_internal_temp(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = stream->WriteRaw(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).data(),
         static_cast<int>(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).size()), target);
@@ -323,6 +365,24 @@ size_t Gauge::ByteSizeLong() const {
     total_size += 1 + 1;
   }
 
+  // float ibat = 5;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_ibat = this->_internal_ibat();
+  uint32_t raw_ibat;
+  memcpy(&raw_ibat, &tmp_ibat, sizeof(tmp_ibat));
+  if (raw_ibat != 0) {
+    total_size += 1 + 4;
+  }
+
+  // float temp = 6;
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_temp = this->_internal_temp();
+  uint32_t raw_temp;
+  memcpy(&raw_temp, &tmp_temp, sizeof(tmp_temp));
+  if (raw_temp != 0) {
+    total_size += 1 + 4;
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     total_size += _internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).size();
   }
@@ -364,6 +424,20 @@ void Gauge::MergeFrom(const Gauge& from) {
   if (from._internal_charging() != 0) {
     _this->_internal_set_charging(from._internal_charging());
   }
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_ibat = from._internal_ibat();
+  uint32_t raw_ibat;
+  memcpy(&raw_ibat, &tmp_ibat, sizeof(tmp_ibat));
+  if (raw_ibat != 0) {
+    _this->_internal_set_ibat(from._internal_ibat());
+  }
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_temp = from._internal_temp();
+  uint32_t raw_temp;
+  memcpy(&raw_temp, &tmp_temp, sizeof(tmp_temp));
+  if (raw_temp != 0) {
+    _this->_internal_set_temp(from._internal_temp());
+  }
   _this->_internal_metadata_.MergeFrom<std::string>(from._internal_metadata_);
 }
 
@@ -388,8 +462,8 @@ void Gauge::InternalSwap(Gauge* other) {
       &other->_impl_.appversion_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(Gauge, _impl_.charging_)
-      + sizeof(Gauge::_impl_.charging_)
+      PROTOBUF_FIELD_OFFSET(Gauge, _impl_.temp_)
+      + sizeof(Gauge::_impl_.temp_)
       - PROTOBUF_FIELD_OFFSET(Gauge, _impl_.vbat_)>(
           reinterpret_cast<char*>(&_impl_.vbat_),
           reinterpret_cast<char*>(&other->_impl_.vbat_));

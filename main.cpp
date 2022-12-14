@@ -50,6 +50,22 @@ typedef struct alignas(4)
 
 tPowerData juice_legacy;
 
+
+int Average(float &val, int num)
+{
+    static float avg = 0;
+    if (num < 1)
+        return -1;
+    // exponential moving average:
+    avg -= avg / num;
+    avg += val / num;
+    val = avg;
+    // cumulative average:
+    //avg = avg * (num - 1)/num + val * 1/num;
+    return 0;
+}
+
+
 #define HEART_RATE_MS  1000
 
 int main(int argc, char **argv)
@@ -89,6 +105,10 @@ int main(int argc, char **argv)
     mqtt::async_client client(SERVER_ADDRESS, "");
     cout << "  OK" << endl;
 
+    auto connOpts = mqtt::connect_options_builder()
+        .clean_session()
+        .finalize();
+
     protopower::Gauge juice_gauge;
 
     cout << "Initialization complete." << endl;
@@ -100,7 +120,7 @@ int main(int argc, char **argv)
         try
         {
             cout << "\nConnecting...";
-            client.connect()->wait();
+            client.connect(connOpts)->wait();
             cout << "  OK" << endl;
 
             uint64_t elapsedUsec = 0;
@@ -127,6 +147,7 @@ int main(int argc, char **argv)
                     cout << "Gauge SOC Error: " << err << endl;
                 else
                 {
+                    Average(value, 5);
                     juice_legacy.gauge.SoC = value;
                     juice_gauge.set_soc(value);
                 }
@@ -166,7 +187,27 @@ int main(int argc, char **argv)
                 else
                     juice_legacy.charger.IChg = value;
 
+                // store app version
                 juice_gauge.set_appversion(VERSION);
+
+                // record battery current, charging or discharging
+                if (juice_gauge.charging())
+                    juice_gauge.set_ibat( -juice_legacy.charger.IChg );
+                else
+                    juice_gauge.set_ibat( juice_legacy.charger.IDchg );
+
+                // record temperature
+                std::ifstream tzone0("/sys/class/thermal/thermal_zone0/temp", std::ios::in);
+                uint32_t t0=0;
+                if (tzone0)
+                    tzone0 >> t0;
+                tzone0.close();
+                std::ifstream tzone1("/sys/class/thermal/thermal_zone1/temp", std::ios::in);
+                uint32_t t1=0;
+                if (tzone1)
+                    tzone1 >> t1;
+                tzone1.close();
+                juice_gauge.set_temp( t0 > t1 ? t0/1000.0 : t1/1000.0 );
 
                 // publish data over MQTT
                 string msg_data = juice_gauge.SerializeAsString();

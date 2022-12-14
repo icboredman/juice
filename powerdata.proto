@@ -9,6 +9,8 @@ message Gauge {       // probably the only message really needed
   float soc = 2;
   bool  charging = 3;  // same as Status.charging
   string appversion = 4;
+  float ibat = 5;
+  float temp = 6;
 }
 
 message Charger {

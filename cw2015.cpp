@@ -2,7 +2,8 @@
 //
 #include "cw2015.hpp"
 
-#define SOC_USE_TABLE
+//#define SOC_USE_TABLE
+#define SOC_USE_FORMULA
 
 #define DEV_ADDR    0x62
 
@@ -46,16 +47,7 @@
         return err;
     }
 
-#ifndef SOC_USE_TABLE
-    int GaugeCW2015::GetSoC(float &val)
-    {
-        uint16_t data;
-        int err;
-        if ((err = i2c->Read2(data, DEV_ADDR, REG_SOC)) == 0)
-            val = data / 256.0;
-        return err;
-    }
-#else
+#if defined SOC_USE_TABLE
 //https://stackoverflow.com/a/7091791
     typedef struct { float x; float y; } tLut;
 
@@ -104,4 +96,30 @@
             val = Interpolate(lut, vBat, 12);
         return 0;
     }
+
+#elif defined SOC_USE_FORMULA
+    const float A = -2.9;
+    const float B = 95.0;
+
+    int GaugeCW2015::GetSoC(float &val)
+    {
+        val /= 2;
+        val = (val + A) * B;
+        if (val > 100)
+            val = 100;
+        else if (val < 0)
+            val = 0;
+        return 0;
+    }
+
+#else
+    int GaugeCW2015::GetSoC(float &val)
+    {
+        uint16_t data;
+        int err;
+        if ((err = i2c->Read2(data, DEV_ADDR, REG_SOC)) == 0)
+            val = data / 256.0;
+        return err;
+    }
+
 #endif

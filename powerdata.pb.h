@@ -172,6 +172,8 @@ class Gauge final :
     kVbatFieldNumber = 1,
     kSocFieldNumber = 2,
     kChargingFieldNumber = 3,
+    kIbatFieldNumber = 5,
+    kTempFieldNumber = 6,
   };
   // string appversion = 4;
   void clear_appversion();
@@ -214,6 +216,24 @@ class Gauge final :
   void _internal_set_charging(bool value);
   public:
 
+  // float ibat = 5;
+  void clear_ibat();
+  float ibat() const;
+  void set_ibat(float value);
+  private:
+  float _internal_ibat() const;
+  void _internal_set_ibat(float value);
+  public:
+
+  // float temp = 6;
+  void clear_temp();
+  float temp() const;
+  void set_temp(float value);
+  private:
+  float _internal_temp() const;
+  void _internal_set_temp(float value);
+  public:
+
   // @@protoc_insertion_point(class_scope:protopower.Gauge)
  private:
   class _Internal;
@@ -226,6 +246,8 @@ class Gauge final :
     float vbat_;
     float soc_;
     bool charging_;
+    float ibat_;
+    float temp_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -888,6 +910,46 @@ inline void Gauge::set_allocated_appversion(std::string* appversion) {
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   // @@protoc_insertion_point(field_set_allocated:protopower.Gauge.appversion)
+}
+
+// float ibat = 5;
+inline void Gauge::clear_ibat() {
+  _impl_.ibat_ = 0;
+}
+inline float Gauge::_internal_ibat() const {
+  return _impl_.ibat_;
+}
+inline float Gauge::ibat() const {
+  // @@protoc_insertion_point(field_get:protopower.Gauge.ibat)
+  return _internal_ibat();
+}
+inline void Gauge::_internal_set_ibat(float value) {
+  
+  _impl_.ibat_ = value;
+}
+inline void Gauge::set_ibat(float value) {
+  _internal_set_ibat(value);
+  // @@protoc_insertion_point(field_set:protopower.Gauge.ibat)
+}
+
+// float temp = 6;
+inline void Gauge::clear_temp() {
+  _impl_.temp_ = 0;
+}
+inline float Gauge::_internal_temp() const {
+  return _impl_.temp_;
+}
+inline float Gauge::temp() const {
+  // @@protoc_insertion_point(field_get:protopower.Gauge.temp)
+  return _internal_temp();
+}
+inline void Gauge::_internal_set_temp(float value) {
+  
+  _impl_.temp_ = value;
+}
+inline void Gauge::set_temp(float value) {
+  _internal_set_temp(value);
+  // @@protoc_insertion_point(field_set:protopower.Gauge.temp)
 }
 
 // -------------------------------------------------------------------
