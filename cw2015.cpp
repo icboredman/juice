@@ -44,6 +44,8 @@
         int err;
         if ((err = i2c->Read2(data, DEV_ADDR, REG_VCELL)) == 0)
             val = data * 305e-6 * 2.0;
+        else
+            val = -1.0;
         return err;
     }
 
@@ -98,11 +100,14 @@
     }
 
 #elif defined SOC_USE_FORMULA
-    const float A = -2.9;
-    const float B = 95.0;
+    const float A = -3.0;
+    const float B = 103.0;
 
     int GaugeCW2015::GetSoC(float &val)
     {
+        if (val <= 0)
+            return -1;
+
         val /= 2;
         val = (val + A) * B;
         if (val > 100)
@@ -119,6 +124,8 @@
         int err;
         if ((err = i2c->Read2(data, DEV_ADDR, REG_SOC)) == 0)
             val = data / 256.0;
+        else
+            val = -1.0;
         return err;
     }
 

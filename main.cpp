@@ -230,6 +230,18 @@ int main(int argc, char **argv)
                     }
                 }
 
+                // safety checks
+                if ( !juice_gauge.charging() && juice_gauge.vbat() > 3.0 && juice_gauge.soc() < 0.1 )
+                {
+                    std::cout << "Battery empty! Shutting down..." << std::endl;
+                    system("shutdown -P now 'Battery empty'");
+                }
+                if ( juice_gauge.temp() >= 55.0 )
+                {
+                    std::cout << "Overheating! Shutting down..." << std::endl;
+                    system("shutdown -P now 'Overheating'");
+                }
+
                 this_thread::sleep_until(next_run_time);
             }
         }
